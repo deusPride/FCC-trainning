@@ -1,0 +1,25 @@
+{
+  "name": "bda",
+  "version": "1.0.0",
+  "description": "Back End Development and APIs trainning",
+  "main": "index.js",
+  "scripts": {
+    "test": "dev-test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deusPride/FCC-trainning.git"
+  },
+  "keywords": [
+    "Backend",
+    "Development",
+    "and",
+    "APIs"
+  ],
+  "author": "Jane Doe",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deusPride/FCC-trainning/issues"
+  },
+  "homepage": "https://github.com/deusPride/FCC-trainning#readme"
+}
