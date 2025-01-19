@@ -11,6 +11,10 @@
 		"type": "git",
 		"url": "https://github.com/freeCodeCamp/boilerplate-npm.git"
 	},
-  "author": "Serval Toukap Nono"
+  "author": "Serval Toukap Nono",
+  "description": "Backend and APIs development with Node.js",
+  "keywords": ["freecodecamp", "Trainning", "Backend", "APIs" ],
+  "license": "MIT",
+  "version": "1.0.0"
     
 }
