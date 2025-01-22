@@ -54,7 +54,8 @@ app.get('/api/test/', function (req, res) {
 
 app.post('/api/shorturl/', function (req, res) {
   const url = req.body.url;
-  const urlWithoutHttps = url.split('/')[2];
+  const urlWithoutHttps = new URL(url).hostname;
+  console.log(urlWithoutHttps);
   dns.lookup(urlWithoutHttps, (err) => {
     if (err) {
       return res.json({ error: 'invalid url' });
