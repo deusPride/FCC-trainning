@@ -65,24 +65,26 @@ const findOneUserByID = async function(userId,done){
 };
 
 
-const createAndSaveExercice = async function(exo,userId,done){
-  var user = {};
-  await findOneUserByID(userId,(err,userFound) => {
-    if (err) return console.error('User not Found ',err);
-    if (userFound){
-    user = userFound;
+const createAndSaveExercice = async function (exo, userId, done) {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return done(new Error('Utilisateur non trouvé'), null);
+    }
+
+    const exerciseData = {
+      username: user.username,
+      description: exo.description,
+      duration: exo.duration,
+      date: exo.date ? new Date(exo.date) : new Date(),
     };
-  });
-  exo = new Exercise({
-    username :user.username,
-    description: exo.description,
-    duration: exo.duration,
-    date: exo.date
-  });
-  exo.save((err, data) => {
-    if(err) return console.error(err);
-    done(null, data);
-  });
+
+    const exercise = new Exercise(exerciseData);
+    const savedExercise = await exercise.save();
+    done(null, savedExercise);
+  } catch (err) {
+    done(err, null);
+  }
 };
 
 
@@ -92,7 +94,7 @@ const findAllUser =(done) => {
     done(null,usersFound); 
   });  
 };
-const findExerciseByUsername = (usernamedone) => {
+const findExerciseByUsername = (username,done) => {
   Exercise.find({username :username},(err,exercicesFound) => {
     if (err) return console.error("Error: ",err);
     done(null,exercicesFound);  
@@ -112,25 +114,35 @@ app.post('/api/users',(req,res) => {
 });
 
 //registering an exercice
-app.post('/api/users/:_id/exercises',(req,res) => {
+app.post('/api/users/:_id/exercises', async (req, res) => {
   const userId = req.params._id;
   const exo = {
     description: req.body.description,
-    duration: parseInt(req.body.duration), 
-    date: req.body.date};
-  createAndSaveExercice(exo,userId,(err,data) => {
-    if (err) return console.error('Error',err,' while creating Exercise');
-    if(data){ 
-      const output = {
-        _id:userId,
-        username:data.username,
-        exercise:exo
-      }
-      return res.json(output)};
+    duration: parseInt(req.body.duration),
+    date: req.body.date,
+  };
+
+  createAndSaveExercice(exo, userId, (err, data) => {
+    if (err) {
+      console.error('Erreur lors de la création de l’exercice:', err.message);
+      return res.status(400).json({ error: err.message });
+    }
+
+    // Formater la sortie pour inclure uniquement les champs nécessaires
+    const output = {
+      _id: userId,
+      username: data.username,
+      description: data.description,
+      duration: data.duration,
+      date: data.date.toDateString(), // Formater la date pour qu’elle soit lisible
+    };
+    res.json(output);
   });
 });
 
 //Fetching data
+
+//Fetching the users list
 app.get('/api/users',(req,res) => {
   const userId=req.params.id;
   findAllUser((err,userFound) => {
@@ -140,6 +152,40 @@ app.get('/api/users',(req,res) => {
   })
   
 })
+
+app.get('/api/users/:_id/logs',async (req,res) => {
+try{
+  const userId = req.params._id;
+  await findOneUserByID(userId,(err,userFound) => {
+    if(!userFound) return res.status(400).json({error:err});
+  findExerciseByUsername(userFound.username,(err,exoList) => {
+    if(!exoList) return res.status(400).json({error:err});
+    let description = exoList.description;
+    let duration = exoList.duration ;
+    let date = exoList.date;
+  const output = {
+    _id:userFound._id,
+    username:userFound.username,
+    count:Object.keys(exoList).length,
+    log : Object.values(exoList).map(item => {
+      return {
+        description: item.description,
+        duration: item.duration,
+        date: item.date.toDateString()
+      };
+    })
+  };
+  return res.json(output);  
+  });
+    
+  });
+
+}catch(e){
+  console.log("Erreur ",e);
+  return res.json(e);
+};
+});
+
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
