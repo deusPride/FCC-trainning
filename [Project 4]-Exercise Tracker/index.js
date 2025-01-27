@@ -94,13 +94,6 @@ const findAllUser =(done) => {
     done(null,usersFound); 
   });  
 };
-const findExerciseByUsername = (username,done) => {
-
-  Exercise.find({username :username},(err,exercicesFound) => {
-    if (err) return console.error("Error: ",err);
-    done(null,exercicesFound);  
-  }); 
-};
 
 
 //Routes for database querying
