@@ -95,6 +95,7 @@ const findAllUser =(done) => {
   });  
 };
 const findExerciseByUsername = (username,done) => {
+
   Exercise.find({username :username},(err,exercicesFound) => {
     if (err) return console.error("Error: ",err);
     done(null,exercicesFound);  
@@ -153,38 +154,45 @@ app.get('/api/users',(req,res) => {
   
 })
 
-app.get('/api/users/:_id/logs',async (req,res) => {
-try{
-  const userId = req.params._id;
-  await findOneUserByID(userId,(err,userFound) => {
-    if(!userFound) return res.status(400).json({error:err});
-  findExerciseByUsername(userFound.username,(err,exoList) => {
-    if(!exoList) return res.status(400).json({error:err});
-    let description = exoList.description;
-    let duration = exoList.duration ;
-    let date = exoList.date;
-  const output = {
-    _id:userFound._id,
-    username:userFound.username,
-    count:Object.keys(exoList).length,
-    log : Object.values(exoList).map(item => {
-      return {
-        description: item.description,
-        duration: item.duration,
-        date: item.date.toDateString()
-      };
-    })
-  };
-  return res.json(output);  
-  });
-    
-  });
+app.get('/api/users/:_id/logs', async (req, res) => {
+  try {
+    const { from, to, limit } = req.query;
+    const userId = req.params._id;
 
-}catch(e){
-  console.log("Erreur ",e);
-  return res.json(e);
-};
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    const query = { username: user.username };
+
+    if (from || to) {
+      query.date = {};
+      if (from) query.date.$gte = new Date(from);
+      if (to) query.date.$lte = new Date(to);
+    }
+
+    const exercises = await Exercise.find(query)
+      .limit(parseInt(limit) || 0);
+
+    const output = {
+      _id: user._id,
+      username: user.username,
+      count: exercises.length,
+      log: exercises.map(ex => ({
+        description: ex.description,
+        duration: ex.duration,
+        date: ex.date.toDateString(),
+      })),
+    };
+
+    res.json(output);
+  } catch (err) {
+    console.error('Erreur:', err);
+    res.status(500).json({ error: 'Une erreur s’est produite' });
+  }
 });
+
 
 
 const listener = app.listen(process.env.PORT || 3000, () => {
